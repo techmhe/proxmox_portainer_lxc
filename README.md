@@ -1,4 +1,4 @@
-# Install Portainer into an Proxmox LXC container
+# Install Portainer into a Proxmox LXC container
 
 Benefits of running Portainer docker management framework nested within an LXC container on Proxmox are:
 * Less memory and cpu resource overhead
