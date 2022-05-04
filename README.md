@@ -22,6 +22,18 @@ Edit `create_container.sh` to set your desired container disk size, hostname, po
 bash create_container.sh
 ```
 
+## Known Issues
+
+### ZFS-backed datastores
+Docker appears to have a bug when running in an LXC on a ZFS-backed datastore as it will not enable the native ZFS driver for /var/lib/docker, instead trying to use the AUFS driver (and failing). To work-around the issue, after installation using this script, perform the following:
+
+1. set the docker services to disabled in the LXC container (e.g. systemctl stop docker; systemctl disable docker)
+2. rename your existing /var/lib/docker dir to something else like docker_old
+3. stop the LXC container
+4. in Proxmox gui create a new storage mount point at /var/lib/docker for the container from your ZFS thin zpool
+5. start the container and move all contents within your renamed /var/lib/docker_old dir to the new mount point at /var/lib/docker
+6. re-enable and restart docker services (e.g. systemctl enable docker; systemctl start docker)
+
 Enjoy !
 
 -=dave
