@@ -8,12 +8,17 @@
 # contribs: Dave Johnson <fiveangle@gmail.com> https://github.com/fiveangle 
 #           Actpo Homoc https://github.com/Actpohomoc
 #           whiskerz007 https://github.com/whiskerz007
+#           techMHe https://github.com/techmhe/
 
 # Set your desired container parameters
 PORTAINER_VERSION=portainer-ce  # 1.x=portainer, 2.x=portainer-ce
-HOSTNAME=portainer
-DISK_SIZE=64G
+HOSTNAME=yourhostnamehere
+DISK_SIZE=20G
 
+# Make sure to download the desired template (e.g. Ubuntu 22.04 LTS) and to edit it here 
+TEMPLATE="ubuntu-22.04-standard_22.04-1_amd64.tar.zst" # Name of your template goes here
+OSTYPE="ubuntu" # OS-Type e.g. (Debian, Ubuntu, ...)
+OSVERSION=${OSTYPE}-22.04 # Version number goes here
 
 
 # Create temporary container environment setup script
@@ -94,9 +99,6 @@ docker run -d \\
 
 # Customize container
 msg "Customizing container..."
-rm /etc/motd # Remove message of the day after login
-rm /etc/update-motd.d/10-uname # Remove kernel information after login
-touch ~/.hushlogin # Remove 'Last login: ' and mail notification after login
 GETTY_OVERRIDE="/etc/systemd/system/container-getty@1.service.d/override.conf"
 mkdir -p \$(dirname \$GETTY_OVERRIDE)
 cat << EOF > \$GETTY_OVERRIDE
@@ -180,12 +182,7 @@ function load_module() {
 TEMP_DIR=$(mktemp -d)
 pushd $TEMP_DIR >/dev/null
 
-# Download setup script
-#wget -qL https://github.com/fiveangle/proxmox_portainer_lxc/raw/master/setup.sh
-#cp /root/install/setup.sh ./
-
 # Detect modules and automatically load at boot
-load_module aufs
 load_module overlay
 
 # Select storage location
@@ -218,17 +215,6 @@ info "Using '$STORAGE' for storage location."
 # Get the next guest VM/LXC ID
 CTID=$(pvesh get /cluster/nextid)
 info "Container ID is $CTID."
-
-# Download latest Debian 10 LXC template
-msg "Updating LXC template list..."
-pveam update >/dev/null
-msg "Downloading LXC template..."
-OSTYPE=debian
-OSVERSION=${OSTYPE}-10
-mapfile -t TEMPLATES < <(pveam available -section system | sed -n "s/.*\($OSVERSION.*\)/\1/p" | sort -t - -k 2 -V)
-TEMPLATE="${TEMPLATES[-1]}"
-pveam download local $TEMPLATE >/dev/null ||
-  die "A problem occured while downloading the LXC template."
 
 # Create variables for container disk
 STORAGE_TYPE=$(pvesm status -storage $STORAGE | awk 'NR>1 {print $2}')
